@@ -1,6 +1,6 @@
 // Service Worker para Comercializadora CF
 // Versión del cache - incrementar cuando se actualice
-const CACHE_VERSION = 'cf-v1.0.0';
+const CACHE_VERSION = 'cf-v1.0.1';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const API_CACHE = `${CACHE_VERSION}-api`;
