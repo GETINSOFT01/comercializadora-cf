@@ -32,8 +32,14 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // React ecosystem
-          if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+          // React ecosystem - prevent circular dependencies
+          if (id.includes('react-dom')) {
+            return 'react-dom-vendor';
+          }
+          if (id.includes('react-router')) {
+            return 'react-router-vendor';
+          }
+          if (id.includes('react') && !id.includes('react-dom') && !id.includes('react-router')) {
             return 'react-vendor';
           }
           

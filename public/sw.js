@@ -117,7 +117,11 @@ async function cacheFirst(request, cacheName) {
     return networkResponse;
   } catch (error) {
     console.error('[SW] Cache First error:', error);
-    return new Response('Offline', { status: 503 });
+    return new Response('Offline', { 
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: { 'Content-Type': 'text/plain' }
+    });
   }
 }
 
@@ -125,7 +129,7 @@ async function cacheFirst(request, cacheName) {
 async function networkFirst(request, cacheName) {
   try {
     const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
+    if (networkResponse && networkResponse.ok && networkResponse.status !== 204) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
     }
@@ -147,6 +151,7 @@ async function networkFirst(request, cacheName) {
     
     return new Response('Offline', { 
       status: 503,
+      statusText: 'Service Unavailable',
       headers: { 'Content-Type': 'text/plain' }
     });
   }
@@ -158,7 +163,7 @@ async function staleWhileRevalidate(request, cacheName) {
   const cachedResponse = await cache.match(request);
   
   const fetchPromise = fetch(request).then((networkResponse) => {
-    if (networkResponse.ok) {
+    if (networkResponse && networkResponse.ok && networkResponse.status !== 204) {
       cache.put(request, networkResponse.clone());
     }
     return networkResponse;
