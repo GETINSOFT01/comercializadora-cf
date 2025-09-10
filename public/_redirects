@@ -1,0 +1,39 @@
+# Netlify redirects file for SPA routing and domain configuration
+
+# Force HTTPS redirect
+http://comercializadora-cf.com/* https://comercializadora-cf.com/:splat 301!
+http://www.comercializadora-cf.com/* https://comercializadora-cf.com/:splat 301!
+https://www.comercializadora-cf.com/* https://comercializadora-cf.com/:splat 301!
+
+# Netlify domain redirects (update when custom domain is configured)
+https://comercializadora-cf.netlify.app/* https://comercializadora-cf.com/:splat 301!
+
+# SPA fallback - must be last
+/*    /index.html   200
+
+# API proxy (if needed)
+/api/*  https://your-api-domain.com/api/:splat  200
+
+# Security headers
+/*
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# Service Worker and PWA files
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+  Content-Type: application/javascript
+
+/manifest.json
+  Cache-Control: public, max-age=0, must-revalidate
+  Content-Type: application/manifest+json
+
+# Static assets caching
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable

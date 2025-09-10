@@ -1,0 +1,130 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Authentication and role helper functions
+    function isAuth() { 
+      return request.auth != null; 
+    }
+    
+    function hasRole(role) { 
+      return request.auth != null && request.auth.token.role == role; 
+    }
+    
+    function hasAnyRole(roles) { 
+      return request.auth != null && roles.hasAny([request.auth.token.role]); 
+    }
+    
+    function isAdmin() {
+      return hasRole('admin');
+    }
+    
+    function isManager() {
+      return hasAnyRole(['admin', 'manager']);
+    }
+    
+    function isStaff() {
+      return hasAnyRole(['admin', 'manager', 'supervisor', 'technician']);
+    }
+    
+    function isFinance() {
+      return hasAnyRole(['admin', 'finance']);
+    }
+
+    // Public assets (logos, icons, etc.)
+    match /public/{allPaths=**} {
+      allow read;
+      allow write: if isAdmin();
+    }
+
+    // User profile images
+    match /users/{userId}/profile/{fileName} {
+      allow read: if isAuth();
+      allow write: if (
+        isAuth() && 
+        request.auth.uid == userId &&
+        request.resource.contentType.matches('image/.*') &&
+        request.resource.size < 5 * 1024 * 1024 // 5MB limit
+      );
+    }
+
+    // Service-related files
+    match /services/{serviceId}/{folder}/{fileName} {
+      // Read access based on role and service assignment
+      allow read: if (
+        isManager() ||
+        isFinance() ||
+        // Staff can read files for assigned services (validation done in app)
+        isStaff()
+      );
+
+      // Write access based on folder and role
+      allow write: if (
+        // Evidence photos (RAD reports)
+        (
+          folder == 'evidence' &&
+          hasAnyRole(['admin', 'manager', 'supervisor', 'technician']) &&
+          request.resource.contentType.matches('image/.*') &&
+          request.resource.size < 10 * 1024 * 1024 // 10MB limit for images
+        ) ||
+        
+        // Technical visit photos
+        (
+          folder == 'tech_visit' &&
+          hasAnyRole(['admin', 'manager', 'supervisor']) &&
+          request.resource.contentType.matches('image/.*') &&
+          request.resource.size < 10 * 1024 * 1024
+        ) ||
+        
+        // Proposal documents
+        (
+          folder == 'proposals' &&
+          isManager() &&
+          request.resource.contentType == 'application/pdf' &&
+          request.resource.size < 50 * 1024 * 1024 // 50MB limit for PDFs
+        ) ||
+        
+        // Invoice documents
+        (
+          folder == 'invoices' &&
+          isFinance() &&
+          request.resource.contentType in ['application/pdf', 'application/xml', 'text/xml'] &&
+          request.resource.size < 50 * 1024 * 1024
+        ) ||
+        
+        // Service documents (contracts, permits, etc.)
+        (
+          folder == 'documents' &&
+          isManager() &&
+          request.resource.contentType in ['application/pdf', 'image/jpeg', 'image/png'] &&
+          request.resource.size < 50 * 1024 * 1024
+        )
+      );
+    }
+
+    // Client documents
+    match /clients/{clientId}/{folder}/{fileName} {
+      allow read: if hasAnyRole(['admin', 'manager', 'supervisor', 'finance']);
+      
+      allow write: if (
+        isManager() &&
+        folder in ['contracts', 'documents', 'fiscal_data'] &&
+        request.resource.contentType in ['application/pdf', 'image/jpeg', 'image/png'] &&
+        request.resource.size < 50 * 1024 * 1024
+      );
+    }
+
+    // System backups and exports (admin only)
+    match /system/{folder}/{fileName} {
+      allow read, write: if isAdmin();
+    }
+
+    // Temporary uploads (cleanup via Cloud Functions)
+    match /temp/{userId}/{fileName} {
+      allow read, write: if (
+        isAuth() && 
+        request.auth.uid == userId &&
+        request.resource.size < 100 * 1024 * 1024 // 100MB temp limit
+      );
+    }
+  }
+}

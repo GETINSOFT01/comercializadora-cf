@@ -1,0 +1,176 @@
+import { useState } from 'react';
+import { Outlet, Link as RouterLink } from 'react-router-dom';
+import { useTheme } from '@mui/material/styles';
+import {
+  AppBar,
+  Box,
+  CssBaseline,
+  Divider,
+  Drawer,
+  IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Toolbar,
+  Typography,
+  useMediaQuery,
+} from '@mui/material';
+import {
+  Menu as MenuIcon,
+  Dashboard as DashboardIcon,
+  Assignment as ServicesIcon,
+  People as ClientsIcon,
+  Assessment as ReportsIcon,
+  Settings as AdminIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+} from '@mui/icons-material';
+import { useAuth } from '../../contexts/AuthContext';
+
+const drawerWidth = 240;
+
+export default function Layout() {
+  const theme = useTheme();
+  const { userRole, logout } = useAuth();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [open, setOpen] = useState(!isMobile);
+
+  const handleDrawerToggle = () => {
+    setOpen(!open);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
+
+  const menuItems = [
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['admin', 'manager', 'supervisor', 'finance'] },
+    { text: 'Servicios', icon: <ServicesIcon />, path: '/services', roles: ['admin', 'manager', 'supervisor'] },
+    { text: 'Clientes', icon: <ClientsIcon />, path: '/clients', roles: ['admin', 'manager'] },
+    { text: 'Reportes', icon: <ReportsIcon />, path: '/reports', roles: ['admin', 'manager', 'finance'] },
+    { text: 'Administración', icon: <AdminIcon />, path: '/admin', roles: ['admin'] },
+  ];
+
+  const filteredMenuItems = menuItems.filter(item => 
+    item.roles.some(role => role === userRole)
+  );
+
+  const drawer = (
+    <div>
+      <Toolbar>
+        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          Comercializadora CF
+        </Typography>
+        <IconButton onClick={handleDrawerToggle}>
+          {theme.direction === 'rtl' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+        </IconButton>
+      </Toolbar>
+      <Divider />
+      <List>
+        {filteredMenuItems.map((item) => (
+          <ListItem key={item.text} disablePadding>
+            <ListItemButton component={RouterLink} to={item.path}>
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+      <Divider />
+      <List>
+        <ListItem disablePadding>
+          <ListItemButton onClick={handleLogout}>
+            <ListItemText primary="Cerrar sesión" />
+          </ListItemButton>
+        </ListItem>
+      </List>
+    </div>
+  );
+
+  return (
+    <Box sx={{ display: 'flex' }}>
+      <CssBaseline />
+      <AppBar
+        position="fixed"
+        sx={{
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          transition: theme.transitions.create(['width', 'margin'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+          }),
+          ...(open && !isMobile && {
+            marginLeft: drawerWidth,
+            width: `calc(100% - ${drawerWidth}px)`,
+            transition: theme.transitions.create(['width', 'margin'], {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
+          }),
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            onClick={handleDrawerToggle}
+            edge="start"
+            sx={{
+              marginRight: 5,
+              ...(open && { display: 'none' }),
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            Panel de Control
+          </Typography>
+          <Typography variant="body2">
+            {userRole ? `Rol: ${userRole.charAt(0).toUpperCase() + userRole.slice(1)}` : ''}
+          </Typography>
+        </Toolbar>
+      </AppBar>
+      <Box
+        component="nav"
+        sx={{
+          width: { sm: drawerWidth },
+          flexShrink: { sm: 0 },
+        }}
+        aria-label="mailbox folders"
+      >
+        <Drawer
+          variant={isMobile ? 'temporary' : 'persistent'}
+          open={open}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true, // Better open performance on mobile.
+          }}
+          sx={{
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: drawerWidth,
+            },
+          }}
+        >
+          {drawer}
+        </Drawer>
+      </Box>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          marginTop: '64px', // Adjust based on your AppBar height
+        }}
+      >
+        <Outlet />
+      </Box>
+    </Box>
+  );
+}

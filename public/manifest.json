@@ -1,0 +1,87 @@
+{
+  "name": "Comercializadora CF",
+  "short_name": "CF App",
+  "description": "Sistema de gestión para Comercializadora CF - Clientes, Servicios y Reportes",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1976d2",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "es-MX",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-152x152.svg",
+      "sizes": "152x152",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nuevo Cliente",
+      "short_name": "Cliente",
+      "description": "Crear un nuevo cliente",
+      "url": "/clients/new",
+      "icons": [
+        {
+          "src": "/icons/shortcut-client.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Nuevo Servicio",
+      "short_name": "Servicio",
+      "description": "Crear una nueva solicitud de servicio",
+      "url": "/services/new",
+      "icons": [
+        {
+          "src": "/icons/shortcut-service.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Panel",
+      "description": "Ver el panel de control",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/icons/shortcut-dashboard.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard principal de la aplicación"
+    },
+    {
+      "src": "/screenshots/mobile-clients.png",
+      "sizes": "375x667",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Lista de clientes en móvil"
+    }
+  ]
+}

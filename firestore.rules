@@ -1,0 +1,210 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Authentication and role helper functions
+    function isAuthenticated() { 
+      return request.auth != null; 
+    }
+    
+    function hasRole(role) {
+      return request.auth != null && request.auth.token.role == role;
+    }
+    
+    function hasAnyRole(roles) {
+      return request.auth != null && roles.hasAny([request.auth.token.role]);
+    }
+    
+    function isAdmin() {
+      return hasRole('admin');
+    }
+    
+    function isManager() {
+      return hasAnyRole(['admin', 'manager']);
+    }
+    
+    function isSupervisor() {
+      return hasAnyRole(['admin', 'manager', 'supervisor']);
+    }
+    
+    function isStaff() {
+      return hasAnyRole(['admin', 'manager', 'supervisor', 'technician']);
+    }
+    
+    function isFinance() {
+      return hasAnyRole(['admin', 'finance']);
+    }
+    
+    function canReadServices() {
+      return hasAnyRole(['admin', 'manager', 'supervisor', 'technician', 'finance', 'client']);
+    }
+    
+    function canWriteServices() {
+      return hasAnyRole(['admin', 'manager', 'supervisor', 'technician']);
+    }
+    
+    function canDeleteServices() {
+      return hasAnyRole(['admin', 'manager']);
+    }
+
+    // Generic read access policy: authenticated users can read unless restricted per collection
+    match /{document=**} {
+      allow read: if isAuthenticated();
+    }
+
+    // Clients Collection
+    match /clients/{clientId} {
+      allow create, update, delete: if isManager();
+      allow read: if hasAnyRole(['admin', 'manager', 'supervisor', 'technician', 'finance']);
+      
+      // Clients can only read their own data
+      allow read: if hasRole('client') && resource.data.userId == request.auth.uid;
+    }
+
+    // Services Collection
+    match /services/{serviceId} {
+      // Create: Admin/Manager only
+      allow create: if isManager();
+      
+      // Delete: Admin/Manager only
+      allow delete: if canDeleteServices();
+
+      // Update based on role and assignment
+      allow update: if (
+        // Admin/Manager can update any service
+        isManager() ||
+        
+        // Supervisor can update assigned services with limited fields
+        (
+          isSupervisor() && 
+          resource.data.assignedTeam.hasAny([request.auth.uid]) &&
+          request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'fscf002_data', 'statusHistory', 'updatedAt', 'status'
+          ])
+        ) ||
+        
+        // Technician can update progress and RAD data for assigned services
+        (
+          hasRole('technician') &&
+          resource.data.assignedTeam.hasAny([request.auth.uid]) &&
+          request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'statusHistory', 'updatedAt'
+          ])
+        ) ||
+        
+        // Finance can update billing-related fields
+        (
+          isFinance() &&
+          request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'status', 'updatedAt'
+          ]) &&
+          hasAnyRole(['Finalizado', 'Facturado', 'Pagado']).hasAny([request.resource.data.status])
+        )
+      );
+
+      // Read access based on role
+      allow read: if (
+        // Admin/Manager/Finance can read all
+        hasAnyRole(['admin', 'manager', 'finance']) ||
+        
+        // Supervisor/Technician can read assigned services
+        (
+          hasAnyRole(['supervisor', 'technician']) && 
+          resource.data.assignedTeam.hasAny([request.auth.uid])
+        ) ||
+        
+        // Clients can read their own services
+        (
+          hasRole('client') && 
+          resource.data.clientId == request.auth.uid
+        )
+      );
+    }
+
+    // Proposals Collection
+    match /proposals/{proposalId} {
+      allow create, update, delete: if isManager();
+      allow read: if hasAnyRole(['admin', 'manager', 'finance']);
+      
+      // Supervisors can read proposals for assigned services
+      allow read: if (
+        isSupervisor() &&
+        exists(/databases/$(database)/documents/services/$(resource.data.serviceId)) &&
+        get(/databases/$(database)/documents/services/$(resource.data.serviceId)).data.assignedTeam.hasAny([request.auth.uid])
+      );
+    }
+
+    // Daily Reports (RAD) Collection
+    match /daily_reports/{radId} {
+      // Admin/Manager full access
+      allow create, update, delete: if isManager();
+      
+      // Supervisors and Technicians can create/update their own RADs
+      allow create, update: if (
+        hasAnyRole(['supervisor', 'technician']) &&
+        request.resource.data.reportedBy == request.auth.uid
+      );
+      
+      // Read access for all authenticated users
+      allow read: if isAuthenticated();
+      
+      // Clients can only read RADs for their services
+      allow read: if (
+        hasRole('client') &&
+        exists(/databases/$(database)/documents/services/$(resource.data.serviceId)) &&
+        get(/databases/$(database)/documents/services/$(resource.data.serviceId)).data.clientId == request.auth.uid
+      );
+    }
+
+    // Invoices Collection
+    match /invoices/{invoiceId} {
+      allow create, update, delete: if isFinance();
+      allow read: if hasAnyRole(['admin', 'manager', 'finance']);
+      
+      // Clients can read their own invoices
+      allow read: if (
+        hasRole('client') && 
+        resource.data.clientId == request.auth.uid
+      );
+    }
+
+    // Users Collection - Admin only management
+    match /users/{uid} {
+      // Users can read their own profile
+      allow read: if isAuthenticated() && request.auth.uid == uid;
+      
+      // Admin can manage all users
+      allow read, create, update, delete: if isAdmin();
+      
+      // Managers can read user profiles
+      allow read: if isManager();
+    }
+
+    // Audit Logs Collection - System generated only
+    match /audit_logs/{logId} {
+      allow read: if hasAnyRole(['admin', 'manager']);
+      allow create, update, delete: if false; // Only Cloud Functions can write
+    }
+
+    // System Configuration - Admin only
+    match /system_config/{configId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Notifications Collection
+    match /notifications/{notificationId} {
+      // Users can read their own notifications
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Users can mark their notifications as read
+      allow update: if (
+        isAuthenticated() && 
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.diff(resource.data).changedKeys().hasOnly(['read', 'readAt'])
+      );
+      
+      // System creates notifications via Cloud Functions
+      allow create, delete: if false;
+    }
+  }
+}

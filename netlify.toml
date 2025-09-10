@@ -1,0 +1,113 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_FLAGS = "--production=false"
+
+# Production site settings
+[context.production]
+  command = "npm run build"
+  
+[context.production.environment]
+  NODE_ENV = "production"
+  VITE_APP_ENV = "production"
+
+# Branch deploy settings
+[context.branch-deploy]
+  command = "npm run build"
+  
+[context.branch-deploy.environment]
+  NODE_ENV = "production"
+  VITE_APP_ENV = "staging"
+
+# Deploy preview settings
+[context.deploy-preview]
+  command = "npm run build"
+  
+[context.deploy-preview.environment]
+  NODE_ENV = "production"
+  VITE_APP_ENV = "preview"
+
+# Headers for security and PWA
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Content-Type = "application/javascript"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/icons/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Redirects for SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# API proxy for development (optional)
+[[redirects]]
+  from = "/api/*"
+  to = "https://your-api-domain.com/api/:splat"
+  status = 200
+  force = false
+
+# Security redirects
+[[redirects]]
+  from = "http://comercializadora-cf.netlify.app/*"
+  to = "https://comercializadora-cf.netlify.app/:splat"
+  status = 301
+  force = true
+
+# Custom domain redirects (update when domain is configured)
+[[redirects]]
+  from = "https://www.comercializadora-cf.com/*"
+  to = "https://comercializadora-cf.com/:splat"
+  status = 301
+  force = true
+
+# Edge functions for analytics (optional)
+[[edge_functions]]
+  function = "analytics"
+  path = "/*"
+
+# Form handling
+[build.processing]
+  skip_processing = false
+
+[build.processing.css]
+  bundle = true
+  minify = true
+
+[build.processing.js]
+  bundle = true
+  minify = true
+
+[build.processing.html]
+  pretty_urls = true
+
+[build.processing.images]
+  compress = true
