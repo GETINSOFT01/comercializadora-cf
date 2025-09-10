@@ -158,8 +158,9 @@ class ProductionMonitor {
     document.head.appendChild(script);
 
     // Configure gtag
-    window.gtag = window.gtag || function() {
-      (window.gtag.q = window.gtag.q || []).push(arguments);
+    window.gtag = window.gtag || function(...args: any[]) {
+      (window.gtag as any).q = (window.gtag as any).q || [];
+      (window.gtag as any).q.push(args);
     };
     
     window.gtag('js', new Date());
