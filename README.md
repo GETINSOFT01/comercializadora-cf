@@ -1,6 +1,26 @@
-# React + TypeScript + Vite
+# Comercializadora CF
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema de gestión empresarial desarrollado con React, TypeScript y Firebase.
+
+## 🚀 CI/CD Pipeline Activado
+
+- ✅ GitHub Actions configurado
+- ✅ Deploy automático a Netlify
+- ✅ PWA completa implementada
+- ✅ Monitoreo de producción activo
+
+### Deploy Status:
+- **Staging**: Deploy automático en Pull Requests
+- **Production**: Deploy automático en merge a main
+- **Monitoring**: Web Vitals + Error tracking + Uptime alerts
+
+## 📱 PWA Features
+
+- Service Worker con cache strategies
+- Offline functionality
+- Install prompt
+- Push notifications ready
+- Performance monitoring
 
 Currently, two official plugins are available:
 
