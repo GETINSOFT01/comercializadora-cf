@@ -29,6 +29,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import {
   Add as AddIcon,
   Search as SearchIcon,
@@ -41,8 +42,14 @@ import { es } from 'date-fns/locale';
 
 const statusColors: Record<ServiceStatus, 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'> = {
   'Solicitado': 'info',
+  'En Proceso': 'primary',
+  'Visita Técnica': 'warning',
   'En Visita Técnica': 'info',
-  'Cotización Aprobada': 'info',
+  'Pendiente Cotización': 'warning',
+  'Cotización Enviada': 'info',
+  'Cotización Aprobada': 'success',
+  'Cotización Rechazada': 'error',
+  'Rechazado': 'error',
   'En Planificación': 'warning',
   'En Ejecución': 'warning',
   'Finalizado': 'success',
@@ -157,7 +164,7 @@ export default function ServicesPage() {
   };
 
   return (
-    <Box>
+    <Box sx={{ px: 0, ml: 0, mr: 0 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
           Servicios
@@ -173,9 +180,9 @@ export default function ServicesPage() {
         )}
       </Box>
 
-      <Card sx={{ mb: 3 }}>
+      <Card sx={{ mb: 3, mx: 0 }}>
         <CardHeader title="Filtros" />
-        <CardContent>
+        <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
             <Box sx={{ flex: '1 1 300px', minWidth: '200px' }}>
               <TextField
@@ -210,42 +217,38 @@ export default function ServicesPage() {
               </FormControl>
             </Box>
             <Box sx={{ flex: '0 1 200px', minWidth: '150px' }}>
-              <TextField
-                fullWidth
-                type="date"
+              <DatePicker
                 label="Fecha desde"
-                InputLabelProps={{ shrink: true }}
-                value={dateFilter.start ? format(dateFilter.start, 'yyyy-MM-dd') : ''}
-                onChange={(e) =>
-                  setDateFilter({
-                    ...dateFilter,
-                    start: e.target.value ? new Date(e.target.value) : null,
-                  })
-                }
+                value={dateFilter.start}
+                onChange={(val) => setDateFilter({ ...dateFilter, start: val })}
+                slotProps={{ textField: { fullWidth: true } }}
               />
             </Box>
             <Box sx={{ flex: '0 1 200px', minWidth: '150px' }}>
-              <TextField
-                fullWidth
-                type="date"
+              <DatePicker
                 label="Hasta"
-                InputLabelProps={{ shrink: true }}
-                value={dateFilter.end ? format(dateFilter.end, 'yyyy-MM-dd') : ''}
-                onChange={(e) =>
-                  setDateFilter({
-                    ...dateFilter,
-                    end: e.target.value ? new Date(e.target.value) : null,
-                  })
-                }
+                value={dateFilter.end}
+                onChange={(val) => setDateFilter({ ...dateFilter, end: val })}
+                slotProps={{ textField: { fullWidth: true } }}
               />
+            </Box>
+            <Box>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setDateFilter({ start: null, end: null })}
+                disabled={!dateFilter.start && !dateFilter.end}
+              >
+                Limpiar fechas
+              </Button>
             </Box>
           </Box>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card sx={{ mx: 0 }}>
         <TableContainer component={Paper}>
-          <Table>
+          <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Folio</TableCell>

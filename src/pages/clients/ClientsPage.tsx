@@ -106,7 +106,7 @@ export default function ClientsPage() {
   };
 
   return (
-    <Box>
+    <Box sx={{ px: 0, ml: 0 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" component="h1">
           Clientes
@@ -120,8 +120,8 @@ export default function ClientsPage() {
         </Button>
       </Box>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
+      <Card sx={{ mb: 2, mx: 0 }}>
+        <CardContent sx={{ p: 2 }}>
           <TextField
             fullWidth
             variant="outlined"
@@ -135,17 +135,17 @@ export default function ClientsPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card sx={{ mx: 0 }}>
         <TableContainer component={Paper}>
-          <Table>
+          <Table size="small" sx={{ tableLayout: 'fixed', width: '100%' }}>
             <TableHead>
               <TableRow>
-                <TableCell>Cliente</TableCell>
-                <TableCell>Contacto Principal</TableCell>
-                <TableCell>Información de Contacto</TableCell>
-                <TableCell>RFC</TableCell>
-                <TableCell>Estado</TableCell>
-                <TableCell align="right">Acciones</TableCell>
+                <TableCell sx={{ width: { xs: 220, md: 320 } }}>Cliente</TableCell>
+                <TableCell sx={{ width: { xs: 220, md: 280 } }}>Contacto Principal</TableCell>
+                <TableCell sx={{ width: { xs: 260, md: 360 } }}>Información de Contacto</TableCell>
+                <TableCell sx={{ width: { xs: 140, md: 180 }, whiteSpace: 'nowrap' }}>RFC</TableCell>
+                <TableCell sx={{ width: { xs: 120, md: 140 }, whiteSpace: 'nowrap' }}>Estado</TableCell>
+                <TableCell align="right" sx={{ width: { xs: 120, md: 140 }, whiteSpace: 'nowrap' }}>Acciones</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -184,7 +184,7 @@ export default function ClientsPage() {
                   const primaryContact = getPrimaryContact(client);
                   return (
                     <TableRow key={client.id} hover>
-                      <TableCell>
+                      <TableCell sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         <Box display="flex" alignItems="center">
                           <BusinessIcon color="action" sx={{ mr: 1 }} />
                           <Box>

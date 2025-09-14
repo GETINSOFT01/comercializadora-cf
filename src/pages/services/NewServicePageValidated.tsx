@@ -37,19 +37,11 @@ import {
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { useServiceForm } from '../../hooks/useServiceForm';
+import { useFolioGenerator } from '../../hooks/useFolioGenerator';
+import { useServiceTypes } from '../../hooks/useServiceTypes';
 import { FormErrorBoundary } from '../../components/error/ErrorBoundary';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-
-const serviceTypes = [
-  'Mantenimiento Agrícola',
-  'Fumigación',
-  'Cosecha',
-  'Siembra',
-  'Preparación de Terreno',
-  'Riego',
-  'Otro',
-];
 
 export default function NewServicePageValidated() {
   const [activeStep, setActiveStep] = useState(0);
@@ -57,6 +49,9 @@ export default function NewServicePageValidated() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+
+  // Load service types from catalog
+  const { activeServiceTypes, loading: serviceTypesLoading } = useServiceTypes();
 
   // Use our new form validation hook
   const {
@@ -92,26 +87,11 @@ export default function NewServicePageValidated() {
     fetchClients();
   }, []);
 
+  const { generateNewFolio } = useFolioGenerator();
+
   const onSubmit = handleSubmit(async (values) => {
-    // Generate folio (CF + YYYY + WW + 3 digits)
-    const now = new Date();
-    const year = now.getFullYear();
-    const weekNumber = Math.ceil(
-      ((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7
-    )
-      .toString()
-      .padStart(2, '0');
-    
-    // Get the latest service number for this week
-    const servicesRef = collection(db, 'services');
-    const q = query(
-      servicesRef,
-      where('createdAt', '>=', new Date(now.setDate(now.getDate() - 7)))
-    );
-    const querySnapshot = await getDocs(q);
-    const serviceNumber = (querySnapshot.size + 1).toString().padStart(3, '0');
-    
-    const folio = `CF${year}${weekNumber}${serviceNumber}`;
+    // Generate unique folio using transactional counter
+    const folio = await generateNewFolio();
     
     // Create service document
     const serviceData: Omit<Service, 'id'> = {
@@ -241,12 +221,24 @@ export default function NewServicePageValidated() {
                   label="Tipo de Servicio *"
                   value={formValues.serviceType || ''}
                   onChange={(e) => setValue('serviceType', e.target.value)}
+                  disabled={serviceTypesLoading}
                 >
-                  {serviceTypes.map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {type}
+                  {serviceTypesLoading ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={20} sx={{ mr: 1 }} />
+                      Cargando tipos de servicio...
                     </MenuItem>
-                  ))}
+                  ) : activeServiceTypes.length === 0 ? (
+                    <MenuItem disabled>
+                      No hay tipos de servicio disponibles
+                    </MenuItem>
+                  ) : (
+                    activeServiceTypes.map((type) => (
+                      <MenuItem key={type.id} value={type.name}>
+                        {type.name}
+                      </MenuItem>
+                    ))
+                  )}
                 </Select>
                 {hasFieldError('serviceType') && (
                   <FormHelperText>{getFieldError('serviceType')}</FormHelperText>
@@ -436,7 +428,7 @@ export default function NewServicePageValidated() {
         return formValues.clientId !== '';
       case 1:
         return (
-          formValues.serviceType !== '' &&
+          formValues.serviceType &&
           formValues.description !== '' &&
           formValues.priority &&
           formValues.estimatedDuration !== '' &&

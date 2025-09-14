@@ -14,6 +14,7 @@ import theme from './theme/index';
 // PWA Components
 import PWAInstallPrompt from './components/pwa/PWAInstallPrompt';
 import OfflineIndicator from './components/pwa/OfflineIndicator';
+// import PWADebug from './components/debug/PWADebug';
 
 // Lazy loaded pages
 import { Suspense } from 'react';
@@ -25,8 +26,16 @@ import {
   ServiceDetailPage,
   NewServicePage,
   ClientsPage,
+  NewClientPage,
+  ClientDetailPage,
   ReportsPage,
   AdminPage,
+  CatalogsPage,
+  ServiceTypesPage,
+  QuotationsPage,
+  MonitoringDashboard,
+  TechnicalVisitPage,
+  WorkOrderDetailPage,
   NotFoundPage,
   UnauthorizedPage,
 } from './utils/lazyImports';
@@ -79,7 +88,17 @@ function App() {
                     <Route path="services" element={<ServicesPage />} />
                     <Route path="services/new" element={<NewServicePage />} />
                     <Route path="services/:id" element={<ServiceDetailPage />} />
+                    <Route path="services/:id/edit" element={<NewServicePage />} />
+                    <Route path="visitas-tecnicas" element={<TechnicalVisitPage />} />
                     <Route path="clients" element={<ClientsPage />} />
+                    <Route path="clients/new" element={<NewClientPage />} />
+                    <Route path="clients/:id" element={<ClientDetailPage />} />
+                    <Route path="clients/:id/edit" element={<NewClientPage />} />
+                    <Route path="quotations" element={<QuotationsPage />} />
+                    <Route 
+                      path="ot/:workOrderId" 
+                      element={<WorkOrderDetailPage />} 
+                    />
                     <Route 
                       path="reports" 
                       element={
@@ -96,6 +115,30 @@ function App() {
                         </AdminRoute>
                       } 
                     />
+                    <Route 
+                      path="catalogs" 
+                      element={
+                        <AdminRoute>
+                          <CatalogsPage />
+                        </AdminRoute>
+                      } 
+                    />
+                    <Route 
+                      path="catalogs/service-types" 
+                      element={
+                        <AdminRoute>
+                          <ServiceTypesPage />
+                        </AdminRoute>
+                      } 
+                    />
+                    <Route 
+                      path="admin/monitoring" 
+                      element={
+                        <AdminRoute>
+                          <MonitoringDashboard />
+                        </AdminRoute>
+                      } 
+                    />
                   </Route>
                   
                   {/* 404 Not Found */}
@@ -107,6 +150,7 @@ function App() {
             {/* PWA Components */}
             <PWAInstallPrompt />
             <OfflineIndicator />
+            {/* <PWADebug /> */}
           </AuthProvider>
         </SnackbarProvider>
       </LocalizationProvider>

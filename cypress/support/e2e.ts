@@ -40,10 +40,9 @@ beforeEach(() => {
 
 // Add custom commands for authentication
 Cypress.Commands.add('login', (email: string, password: string) => {
-  cy.visit('/login');
-  cy.get('[data-testid="email-input"]').type(email);
-  cy.get('[data-testid="password-input"]').type(password);
-  cy.get('[data-testid="login-button"]').click();
+  // In DEMO_MODE the app auto-authenticates. Go directly to home.
+  cy.visit('/');
+  // Confirm we are not on the login page
   cy.url().should('not.include', '/login');
 });
 
@@ -55,23 +54,31 @@ Cypress.Commands.add('logout', () => {
 
 // Add custom commands for form interactions
 Cypress.Commands.add('fillServiceForm', (serviceData: any) => {
-  cy.get('[data-testid="client-select"]').click();
-  cy.get(`[data-value="${serviceData.clientId}"]`).click();
-  
-  cy.get('[data-testid="service-type-select"]').click();
-  cy.get(`[data-value="${serviceData.serviceType}"]`).click();
-  
-  cy.get('[data-testid="description-input"]').type(serviceData.description);
-  cy.get('[data-testid="duration-input"]').type(serviceData.estimatedDuration);
-  cy.get('[data-testid="location-input"]').type(serviceData.location);
-  cy.get('[data-testid="contact-name-input"]').type(serviceData.contactName);
-  cy.get('[data-testid="contact-phone-input"]').type(serviceData.contactPhone);
-  
-  if (serviceData.additionalNotes) {
-    cy.get('[data-testid="notes-input"]').type(serviceData.additionalNotes);
+  // Assumes we are already on the form. For step 1, select type and fill fields
+  if (serviceData.serviceType) {
+    cy.selectServiceType(serviceData.serviceType);
   }
-  
-  cy.get('[data-testid="terms-checkbox"]').check();
+  if (serviceData.description) {
+    cy.get('[name="description"]').type(serviceData.description, { delay: 0 });
+  }
+  if (serviceData.estimatedDuration) {
+    cy.get('[name="estimatedDuration"]').type(serviceData.estimatedDuration, { delay: 0 });
+  }
+  if (serviceData.estimatedStartDate) {
+    cy.get('[name="estimatedStartDate"]').type(serviceData.estimatedStartDate);
+  }
+  if (serviceData.location) {
+    cy.get('[name="location"]').type(serviceData.location, { delay: 0 });
+  }
+  if (serviceData.contactName) {
+    cy.get('[name="contactName"]').type(serviceData.contactName, { delay: 0 });
+  }
+  if (serviceData.contactPhone) {
+    cy.get('[name="contactPhone"]').type(serviceData.contactPhone, { delay: 0 });
+  }
+  if (serviceData.additionalNotes) {
+    cy.get('[name="additionalNotes"]').type(serviceData.additionalNotes, { delay: 0 });
+  }
 });
 
 // Declare custom commands for TypeScript

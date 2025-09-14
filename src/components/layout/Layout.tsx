@@ -16,6 +16,7 @@ import {
   Toolbar,
   Typography,
   useMediaQuery,
+  Button,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -24,10 +25,16 @@ import {
   People as ClientsIcon,
   Assessment as ReportsIcon,
   Settings as AdminIcon,
+  Category as CatalogsIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  Engineering as TechnicalVisitIcon,
+  RequestQuote as QuotationsIcon,
+  DownloadForOffline as InstallIcon,
+  Update as UpdateIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePWA } from '../../hooks/usePWA';
 
 const drawerWidth = 240;
 
@@ -35,7 +42,8 @@ export default function Layout() {
   const theme = useTheme();
   const { userRole, logout } = useAuth();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [open, setOpen] = useState(!isMobile);
+  const [open, setOpen] = useState(true);
+  const { isInstallable, hasUpdate, isLoading, installApp, updateApp } = usePWA();
 
   const handleDrawerToggle = () => {
     setOpen(!open);
@@ -52,17 +60,19 @@ export default function Layout() {
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['admin', 'manager', 'supervisor', 'finance'] },
     { text: 'Servicios', icon: <ServicesIcon />, path: '/services', roles: ['admin', 'manager', 'supervisor'] },
+    { text: 'Visitas Técnicas', icon: <TechnicalVisitIcon />, path: '/visitas-tecnicas', roles: ['admin', 'manager', 'supervisor'] },
+    { text: 'Cotizaciones', icon: <QuotationsIcon />, path: '/quotations', roles: ['admin', 'manager', 'supervisor'] },
     { text: 'Clientes', icon: <ClientsIcon />, path: '/clients', roles: ['admin', 'manager'] },
     { text: 'Reportes', icon: <ReportsIcon />, path: '/reports', roles: ['admin', 'manager', 'finance'] },
+    { text: 'Catálogos', icon: <CatalogsIcon />, path: '/catalogs', roles: ['admin'] },
     { text: 'Administración', icon: <AdminIcon />, path: '/admin', roles: ['admin'] },
   ];
 
-  const filteredMenuItems = menuItems.filter(item => 
-    item.roles.some(role => role === userRole)
-  );
+  // Para debugging - mostrar todos los items del menú temporalmente
+  const filteredMenuItems = menuItems;
 
   const drawer = (
-    <div>
+    <div style={{ width: drawerWidth, height: '100%' }}>
       <Toolbar>
         <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
           Comercializadora CF
@@ -75,9 +85,28 @@ export default function Layout() {
       <List>
         {filteredMenuItems.map((item) => (
           <ListItem key={item.text} disablePadding>
-            <ListItemButton component={RouterLink} to={item.path}>
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
+            <ListItemButton 
+              component={RouterLink} 
+              to={item.path}
+              sx={{
+                minHeight: 48,
+                justifyContent: open ? 'initial' : 'center',
+                px: 2.5,
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: 0,
+                  mr: open ? 3 : 'auto',
+                  justifyContent: 'center',
+                }}
+              >
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText 
+                primary={item.text} 
+                sx={{ opacity: open ? 1 : 0 }}
+              />
             </ListItemButton>
           </ListItem>
         ))}
@@ -85,8 +114,18 @@ export default function Layout() {
       <Divider />
       <List>
         <ListItem disablePadding>
-          <ListItemButton onClick={handleLogout}>
-            <ListItemText primary="Cerrar sesión" />
+          <ListItemButton 
+            onClick={handleLogout}
+            sx={{
+              minHeight: 48,
+              justifyContent: open ? 'initial' : 'center',
+              px: 2.5,
+            }}
+          >
+            <ListItemText 
+              primary="Cerrar sesión" 
+              sx={{ opacity: open ? 1 : 0 }}
+            />
           </ListItemButton>
         </ListItem>
       </List>
@@ -105,8 +144,8 @@ export default function Layout() {
             duration: theme.transitions.duration.leavingScreen,
           }),
           ...(open && !isMobile && {
-            marginLeft: drawerWidth,
-            width: `calc(100% - ${drawerWidth}px)`,
+            marginLeft: `calc(${drawerWidth}px - 16px)`,
+            width: `calc(100% - (${drawerWidth}px - 16px))`,
             transition: theme.transitions.create(['width', 'margin'], {
               easing: theme.transitions.easing.sharp,
               duration: theme.transitions.duration.enteringScreen,
@@ -133,6 +172,16 @@ export default function Layout() {
           <Typography variant="body2">
             {userRole ? `Rol: ${userRole.charAt(0).toUpperCase() + userRole.slice(1)}` : ''}
           </Typography>
+          {!isLoading && isInstallable && (
+            <Button color="inherit" startIcon={<InstallIcon />} sx={{ ml: 2 }} onClick={installApp}>
+              Instalar app
+            </Button>
+          )}
+          {!isLoading && hasUpdate && (
+            <Button color="warning" startIcon={<UpdateIcon />} sx={{ ml: 1 }} onClick={updateApp}>
+              Actualizar
+            </Button>
+          )}
         </Toolbar>
       </AppBar>
       <Box
@@ -144,16 +193,19 @@ export default function Layout() {
         aria-label="mailbox folders"
       >
         <Drawer
-          variant={isMobile ? 'temporary' : 'persistent'}
+          variant="permanent"
           open={open}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
-          }}
           sx={{
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
-              width: drawerWidth,
+              width: open ? drawerWidth : 0,
+              transition: theme.transitions.create('width', {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.enteringScreen,
+              }),
+              overflowX: 'hidden',
+              borderRight: 'none',
+              boxShadow: 'none',
             },
           }}
         >
@@ -164,12 +216,25 @@ export default function Layout() {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          marginTop: '64px', // Adjust based on your AppBar height
+          // Reduce left padding to align content closer to the drawer
+          pt: 3,
+          pr: 0,
+          pb: 3,
+          pl: 0,
+          // Avoid setting an explicit width to prevent horizontal overflow
+          maxWidth: '100%',
+          overflowX: 'hidden',
+          marginTop: '64px',
+          marginLeft: { sm: open ? `calc(${drawerWidth}px - 16px)` : 0 },
+          transition: theme.transitions.create(['margin', 'width'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+          }),
         }}
       >
-        <Outlet />
+        <Box sx={{ mx: 'auto', width: '100%', maxWidth: 1440, px: 0 }}>
+          <Outlet />
+        </Box>
       </Box>
     </Box>
   );

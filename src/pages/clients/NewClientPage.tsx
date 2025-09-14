@@ -17,7 +17,7 @@ import { doc, getDoc, addDoc, updateDoc, collection, serverTimestamp } from 'fir
 import { db } from '../../firebase/config';
 import { useClientForm } from '../../hooks/useClientForm';
 
-export default function NewClientPageFixed() {
+export default function NewClientPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();

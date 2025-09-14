@@ -109,18 +109,49 @@ export const interceptFirebaseRequests = () => {
   }).as('firebaseAuth');
 
   // Intercept Firestore requests
-  cy.intercept('POST', '**/firestore.googleapis.com/**', {
+  // runQuery (used by SDK for simple collection get)
+  cy.intercept('POST', '**/firestore.googleapis.com/**/documents/**:runQuery', (req) => {
+    if (req.body && JSON.stringify(req.body).includes('clients')) {
+      req.reply({
+        statusCode: 200,
+        body: [
+          {
+            document: {
+              name: 'projects/mock-project/databases/(default)/documents/clients/mock-doc-1',
+              fields: {
+                name: { stringValue: 'Mock Client 1' }
+              }
+            }
+          },
+          {
+            document: {
+              name: 'projects/mock-project/databases/(default)/documents/clients/mock-doc-2',
+              fields: {
+                name: { stringValue: 'Mock Client 2' }
+              }
+            }
+          }
+        ]
+      });
+    } else {
+      req.reply({ statusCode: 200, body: [] });
+    }
+  }).as('firestoreRunQuery');
+
+  // List documents fallback
+  cy.intercept('GET', '**/firestore.googleapis.com/**/documents/clients**', {
     statusCode: 200,
     body: {
       documents: [
         {
           name: 'projects/mock-project/databases/(default)/documents/clients/mock-doc-1',
-          fields: {
-            name: { stringValue: 'Mock Client 1' },
-            email: { stringValue: 'client1@example.com' }
-          }
+          fields: { name: { stringValue: 'Mock Client 1' } }
+        },
+        {
+          name: 'projects/mock-project/databases/(default)/documents/clients/mock-doc-2',
+          fields: { name: { stringValue: 'Mock Client 2' } }
         }
       ]
     }
-  }).as('firestoreQuery');
+  }).as('firestoreList');
 };

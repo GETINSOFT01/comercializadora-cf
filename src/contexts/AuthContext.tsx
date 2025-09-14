@@ -4,6 +4,9 @@ import type { User } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import type { UserRole } from '../types';
 
+// DESARROLLO: Bypass temporal para demostración
+const DEMO_MODE = true;
+
 export type Permission = 
   | 'read_services' 
   | 'write_services' 
@@ -78,6 +81,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    if (DEMO_MODE) {
+      // Modo demo: usuario mock para desarrollo
+      const mockUser = {
+        uid: 'demo-user',
+        email: 'admin@comercializadora-cf.com',
+        displayName: 'Admin Demo'
+      } as User;
+      
+      setCurrentUser(mockUser);
+      setUserRole('admin');
+      updateUserPermissions('admin');
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {

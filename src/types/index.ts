@@ -27,6 +27,13 @@ export interface Client {
   email?: string;
   phone?: string;
   contacts?: ClientContact[];
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
   fiscalData?: {
     rfc?: string;
     address?: string;
@@ -34,6 +41,8 @@ export interface Client {
     state?: string;
     zipCode?: string;
   };
+  paymentTerms?: number;
+  notes?: string;
   isActive?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
@@ -42,8 +51,14 @@ export interface Client {
 // Service related types
 export type ServiceStatus = 
   | 'Solicitado' 
+  | 'En Proceso'
+  | 'Visita Técnica'
   | 'En Visita Técnica' 
+  | 'Pendiente Cotización'
+  | 'Cotización Enviada'
   | 'Cotización Aprobada' 
+  | 'Cotización Rechazada'
+  | 'Rechazado'
   | 'En Planificación' 
   | 'En Ejecución' 
   | 'Finalizado' 
@@ -74,6 +89,7 @@ export interface Service {
   statusHistory?: ServiceStatusHistoryEntry[];
   proposalId?: string;
   assignedTeam?: string[]; // Array of user UIDs
+  requiresTechnicalVisit?: boolean; // Flag to indicate if service requires technical visit
   createdAt: Date | any; // Firestore Timestamp
   updatedAt: Date | any; // Firestore Timestamp
 }
@@ -102,6 +118,8 @@ export interface Proposal {
   totalAmount: number;
   pdfURL?: string;
   status: ProposalStatus;
+  notes?: string;
+  validityDays?: number;
   createdAt: Date;
   updatedAt: Date;
 }

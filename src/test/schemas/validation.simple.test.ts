@@ -47,6 +47,7 @@ describe('Simple Validation Tests', () => {
       contactName: 'Juan Pérez',
       contactPhone: '5551234567',
       additionalNotes: 'Acceso por camino de terracería',
+      requiresVisit: 'no',
       termsAccepted: true,
     };
 

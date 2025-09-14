@@ -65,23 +65,25 @@ export const useClientForm = (initialData?: Partial<ClientFormData>) => {
 
   const addContact = () => {
     const currentContacts = getValues('contacts') || [];
-    setValue('contacts', [
+    const newContacts = [
       ...currentContacts,
       {
         name: '',
         role: '',
         email: '',
         phone: '',
-        // isPrimary is handled internally
       },
-    ]);
+    ];
+    setValue('contacts', newContacts, { shouldValidate: true, shouldDirty: true });
+    enqueueSnackbar('Contacto agregado', { variant: 'success' });
   };
 
   const removeContact = (index: number) => {
     const currentContacts = getValues('contacts') || [];
     if (currentContacts.length > 1) {
       const newContacts = currentContacts.filter((_, i) => i !== index);
-      setValue('contacts', newContacts);
+      setValue('contacts', newContacts, { shouldValidate: true, shouldDirty: true });
+      enqueueSnackbar('Contacto eliminado', { variant: 'success' });
     } else {
       enqueueSnackbar('Debe mantener al menos un contacto', { variant: 'warning' });
     }

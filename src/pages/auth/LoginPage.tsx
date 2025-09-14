@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useSnackbar } from 'notistack';
+import DemoLoginButton from '../../components/auth/DemoLoginButton';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -148,6 +149,13 @@ export default function LoginPage() {
             </Box>
           </Box>
         </Paper>
+        
+        <DemoLoginButton 
+          onDemoLogin={() => {
+            enqueueSnackbar('Entrando en modo demostración...', { variant: 'info' });
+            navigate('/');
+          }} 
+        />
       </Box>
     </Container>
   );

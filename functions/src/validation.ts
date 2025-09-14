@@ -1,5 +1,5 @@
 import { https, firestore } from 'firebase-functions';
-import { getFirestore } from 'firebase-admin/firestore';
+import * as admin from 'firebase-admin';
 import { 
   clientSchema, 
   serviceRequestSchema, 
@@ -13,7 +13,8 @@ import {
   type InvoiceData
 } from './schemas/validation';
 
-const db = getFirestore();
+// Get Firestore instance (admin is initialized in index.ts)
+const getDb = () => admin.firestore();
 
 // Función auxiliar para manejar errores de validación
 const handleValidationError = (error: any) => {
@@ -48,7 +49,7 @@ export const validateClient = https.onCall(async (data, context) => {
     // Validaciones adicionales del lado servidor
     if (validatedData.taxId) {
       // Verificar que el RFC no esté duplicado (excepto para actualizaciones)
-      const existingClient = await db
+      const existingClient = await getDb()
         .collection('clients')
         .where('taxId', '==', validatedData.taxId)
         .get();
@@ -94,7 +95,7 @@ export const validateServiceRequest = https.onCall(async (data, context) => {
     const validatedData = serviceRequestSchema.parse(data);
 
     // Verificar que el cliente existe
-    const clientDoc = await db.collection('clients').doc(validatedData.clientId).get();
+    const clientDoc = await getDb().collection('clients').doc(validatedData.clientId).get();
     if (!clientDoc.exists) {
       throw new https.HttpsError('not-found', 'Cliente no encontrado');
     }
@@ -133,7 +134,7 @@ export const validateDailyReport = https.onCall(async (data, context) => {
     const validatedData = dailyReportSchema.parse(data);
 
     // Verificar que el servicio existe
-    const serviceDoc = await db.collection('services').doc(validatedData.serviceId).get();
+    const serviceDoc = await getDb().collection('services').doc(validatedData.serviceId).get();
     if (!serviceDoc.exists) {
       throw new https.HttpsError('not-found', 'Servicio no encontrado');
     }
@@ -147,7 +148,7 @@ export const validateDailyReport = https.onCall(async (data, context) => {
     }
 
     // Verificar que no exista ya un reporte para esta fecha y servicio
-    const existingReport = await db
+    const existingReport = await getDb()
       .collection('daily_reports')
       .where('serviceId', '==', validatedData.serviceId)
       .where('date', '==', validatedData.date)
@@ -188,7 +189,7 @@ export const validateServiceProposal = https.onCall(async (data, context) => {
     const validatedData = serviceProposalSchema.parse(data);
 
     // Verificar que el servicio existe
-    const serviceDoc = await db.collection('services').doc(validatedData.serviceId).get();
+    const serviceDoc = await getDb().collection('services').doc(validatedData.serviceId).get();
     if (!serviceDoc.exists) {
       throw new https.HttpsError('not-found', 'Servicio no encontrado');
     }
@@ -239,8 +240,8 @@ export const validateInvoice = https.onCall(async (data, context) => {
 
     // Verificar que el servicio y cliente existen
     const [serviceDoc, clientDoc] = await Promise.all([
-      db.collection('services').doc(validatedData.serviceId).get(),
-      db.collection('clients').doc(validatedData.clientId).get(),
+      getDb().collection('services').doc(validatedData.serviceId).get(),
+      getDb().collection('clients').doc(validatedData.clientId).get(),
     ]);
 
     if (!serviceDoc.exists) {
@@ -256,7 +257,7 @@ export const validateInvoice = https.onCall(async (data, context) => {
     }
 
     // Verificar que el número de factura sea único
-    const existingInvoice = await db
+    const existingInvoice = await getDb()
       .collection('invoices')
       .where('invoiceNumber', '==', validatedData.invoiceNumber)
       .get();

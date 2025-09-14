@@ -1,6 +1,6 @@
 // Service Worker para Comercializadora CF
 // Versión del cache - incrementar cuando se actualice
-const CACHE_VERSION = 'cf-v1.0.1';
+const CACHE_VERSION = 'cf-v1.0.3';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const API_CACHE = `${CACHE_VERSION}-api`;
@@ -23,7 +23,8 @@ const APP_ROUTES = [
   '/dashboard',
   '/clients',
   '/services',
-  '/reports'
+  '/reports',
+  '/primeros-pasos'
 ];
 
 // URLs de API para cachear con estrategia específica
@@ -89,6 +90,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // No interceptar preflights (OPTIONS) ni métodos que no sean GET
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // No interceptar recursos de otros orígenes (ej. Firebase Storage)
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   // Estrategia para diferentes tipos de recursos
   if (isStaticAsset(request)) {
     event.respondWith(cacheFirst(request, STATIC_CACHE));
@@ -129,9 +140,17 @@ async function cacheFirst(request, cacheName) {
 async function networkFirst(request, cacheName) {
   try {
     const networkResponse = await fetch(request);
-    if (networkResponse && networkResponse.ok && networkResponse.status !== 204) {
-      const cache = await caches.open(cacheName);
-      cache.put(request, networkResponse.clone());
+    // Solo cachear requests GET y HEAD exitosos
+    if (networkResponse && networkResponse.ok && networkResponse.status !== 204 && 
+        (request.method === 'GET' || request.method === 'HEAD')) {
+      try {
+        const cache = await caches.open(cacheName);
+        // Solo cachear la respuesta original sin modificar la request
+        await cache.put(request, networkResponse.clone());
+      } catch (cacheError) {
+        console.log('[SW] Cache put failed:', cacheError.message);
+        // Continuar sin cachear si hay error
+      }
     }
     return networkResponse;
   } catch (error) {

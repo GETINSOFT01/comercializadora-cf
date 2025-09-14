@@ -11,7 +11,7 @@ export function useServiceForm() {
     mode: 'onChange',
     defaultValues: {
       clientId: '',
-      serviceType: '',
+      serviceType: 'Mantenimiento Agrícola',
       description: '',
       priority: 'media',
       estimatedDuration: '',
@@ -33,15 +33,14 @@ export function useServiceForm() {
     reset,
     setError,
     clearErrors,
+    getValues,
   } = form;
 
   const onSubmit = (submitFn: (data: ServiceRequestFormData) => Promise<void>) =>
-    handleSubmit(async (data: ServiceRequestFormData) => {
+    handleSubmit(async (data) => {
       try {
         await submitFn(data);
-        enqueueSnackbar('Solicitud de servicio creada exitosamente', { 
-          variant: 'success' 
-        });
+        // Success message is handled by the component that uses this hook
       } catch (error) {
         console.error('Form submission error:', error);
         
@@ -78,6 +77,7 @@ export function useServiceForm() {
     reset,
     setError,
     clearErrors,
+    getValues,
     getFieldError,
     hasFieldError,
   };

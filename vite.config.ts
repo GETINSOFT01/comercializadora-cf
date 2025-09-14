@@ -100,13 +100,19 @@ export default defineConfig({
       'firebase/app',
       'firebase/auth',
       'firebase/firestore',
+      'es-toolkit/compat/get',
     ],
     exclude: [
       // Exclude heavy dependencies from pre-bundling
       'jspdf',
       'jspdf-autotable',
-      'recharts',
     ],
+  },
+  // Resolve alias for es-toolkit compatibility
+  resolve: {
+    alias: {
+      'es-toolkit/compat/get': 'es-toolkit/compat',
+    },
   },
   // Server configuration for development
   server: {

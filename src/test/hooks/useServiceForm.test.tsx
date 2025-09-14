@@ -79,7 +79,7 @@ describe('useServiceForm', () => {
     const { result } = renderHook(() => useServiceForm());
 
     act(() => {
-      result.current.setValue('serviceType', 'Invalid Type');
+      result.current.setValue('serviceType', 'Otro');
     });
 
     expect(result.current.hasFieldError('serviceType')).toBe(true);

@@ -31,7 +31,9 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ onClose }) =
 
   React.useEffect(() => {
     if (isInstallable && !isInstalled) {
-      const timer = setTimeout(() => setIsVisible(true), 3000); // Mostrar después de 3 segundos
+      // Show immediately for testing, or after 3 seconds for production
+      const delay = process.env.NODE_ENV === 'development' ? 1000 : 3000;
+      const timer = setTimeout(() => setIsVisible(true), delay);
       return () => clearTimeout(timer);
     }
   }, [isInstallable, isInstalled]);

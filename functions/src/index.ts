@@ -1,6 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import sgMail from '@sendgrid/mail';
+import { Resend } from 'resend';
 
 // Import validation functions
 import {
@@ -59,6 +59,9 @@ export const setCustomUserClaims = functions.https.onCall(async (data, context) 
 
   await admin.auth().setCustomUserClaims(uid, { role });
 
+  return { success: true };
+});
+
 // Firestore Trigger: notify on services status change
 export const onServiceStatusChange = functions.firestore
   .document('services/{serviceId}')
@@ -76,16 +79,15 @@ export const onServiceStatusChange = functions.firestore
       }
 
       const cfg = functions.config();
-      const sendgridKey: string | undefined = cfg?.sendgrid?.key || process.env.SENDGRID_API_KEY;
-      const fromEmail: string = (cfg?.notify?.from || process.env.NOTIFY_FROM_EMAIL || 'no-reply@example.com') as string;
-      const fallbackList: string = (cfg?.notify?.emails || process.env.NOTIFY_EMAILS || '') as string;
+      const resendKey = functions.config().resend?.key;
+      const fallbackList = functions.config().notify?.fallback_emails?.split(',') || [];
 
-      if (!sendgridKey) {
-        console.log('[onServiceStatusChange] Missing SENDGRID key. Logging only.', { oldStatus, newStatus });
+      if (!resendKey) {
+        console.log('[onServiceStatusChange] Missing RESEND key. Logging only.', { oldStatus, newStatus });
         return;
       }
 
-      sgMail.setApiKey(sendgridKey);
+      const resend = new Resend(resendKey);
 
       // Build recipients list
       const recipients: Set<string> = new Set();
@@ -109,7 +111,7 @@ export const onServiceStatusChange = functions.firestore
       }
 
       if (fallbackList) {
-        fallbackList.split(',').map((s) => s.trim()).filter(Boolean).forEach((e) => recipients.add(e));
+        fallbackList.forEach((e: string) => recipients.add(e));
       }
 
       if (recipients.size === 0) {
@@ -118,30 +120,23 @@ export const onServiceStatusChange = functions.firestore
       }
 
       const serviceId = context.params.serviceId;
-      const folio = after.folio || serviceId;
-      const clientId = after.clientId || '';
-      const subject = `Servicio ${folio}: estado actualizado (${oldStatus} → ${newStatus})`;
-      const html = `
-        <div>
-          <h2>Actualización de Estado</h2>
-          <p><strong>Servicio:</strong> ${folio}</p>
-          <p><strong>Cliente:</strong> ${clientId}</p>
-          <p><strong>Estado anterior:</strong> ${oldStatus}</p>
-          <p><strong>Nuevo estado:</strong> ${newStatus}</p>
-          <p><strong>Fecha:</strong> ${new Date().toLocaleString()}</p>
-          <p>Accede al expediente para más detalles.</p>
-        </div>
-      `;
-
-      const msg = {
+      const emailData = {
+        from: functions.config().notify?.from || 'onboarding@resend.dev',
         to: Array.from(recipients),
-        from: fromEmail,
-        subject,
-        html,
-      } as sgMail.MailDataRequired;
+        subject: `Service Status Changed: ${after.serviceType || 'Unknown'} (${after.id || context.params.serviceId})`,
+        html: `
+          <h2>Service Status Update</h2>
+          <p><strong>Service ID:</strong> ${after.id || context.params.serviceId}</p>
+          <p><strong>Service Type:</strong> ${after.serviceType || 'Unknown'}</p>
+          <p><strong>Client:</strong> ${after.clientName || 'Unknown'}</p>
+          <p><strong>Previous Status:</strong> ${oldStatus}</p>
+          <p><strong>New Status:</strong> ${newStatus}</p>
+          <p><strong>Changed At:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>Changed By:</strong> ${after.lastModifiedBy || 'System'}</p>
+        `,
+      };
 
-      await sgMail.sendMultiple(msg);
-      console.log(`[onServiceStatusChange] Email sent to: ${Array.from(recipients).join(', ')}`);
+      await resend.emails.send(emailData);
 
       // Write audit log
       try {
@@ -158,8 +153,8 @@ export const onServiceStatusChange = functions.firestore
         const auditDoc = {
           type: 'service_status_change',
           serviceId,
-          folio,
-          clientId,
+          folio: after.folio || serviceId,
+          clientId: after.clientId || '',
           oldStatus,
           newStatus,
           notes,
@@ -174,12 +169,6 @@ export const onServiceStatusChange = functions.firestore
       console.error('[onServiceStatusChange] Error', err);
     }
   });
-
-  // Optionally force token refresh by updating a custom field in Firestore (if you track users)
-  // await admin.firestore().collection('users').doc(uid).set({ role, claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-
-  return { success: true };
-});
 
 // Callable: lookup user by email (admin only)
 export const lookupUserByEmail = functions.https.onCall(async (data, context) => {
@@ -199,6 +188,92 @@ export const lookupUserByEmail = functions.https.onCall(async (data, context) =>
     };
   } catch (err: any) {
     throw new functions.https.HttpsError('not-found', err?.message || 'User not found');
+  }
+});
+
+// Callable: send email with Resend
+export const sendEmail = functions.https.onCall(async (data, context) => {
+  // Verify authentication
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
+
+  const { to, subject, html, attachments } = data;
+
+  if (!to || !subject || !html) {
+    throw new functions.https.HttpsError('invalid-argument', 'Missing required fields: to, subject, html');
+  }
+
+  try {
+    // Get Resend API key from environment
+    const resendKey = functions.config().resend?.key;
+    const fromEmail = functions.config().notify?.from || 'onboarding@resend.dev';
+
+    if (!resendKey) {
+      throw new functions.https.HttpsError('failed-precondition', 'Resend API key not configured');
+    }
+
+    const resend = new Resend(resendKey);
+
+    const emailData: any = {
+      from: fromEmail,
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      html,
+    };
+
+    // Add attachments if provided
+    if (attachments && Array.isArray(attachments)) {
+      emailData.attachments = attachments.map((att: any) => ({
+        content: att.content,
+        filename: att.filename,
+      }));
+    }
+
+    const result = await resend.emails.send(emailData);
+
+    // Log email send - avoid undefined values completely
+    try {
+      const logData = {
+        to: emailData.to,
+        subject,
+        sentAt: admin.firestore.FieldValue.serverTimestamp(),
+        sentBy: context.auth.uid,
+        status: 'sent',
+        ...(result.data?.id && { emailId: result.data.id })
+      };
+      
+      await admin.firestore().collection('email_logs').add(logData);
+    } catch (logError) {
+      console.warn('Failed to log email send:', logError);
+      // Don't fail the entire operation if logging fails
+    }
+
+    return { 
+      success: true, 
+      message: 'Email sent successfully', 
+      ...(result.data?.id && { emailId: result.data.id })
+    };
+  } catch (error: any) {
+    console.error('Error sending email:', error);
+    
+    // Log email failure - avoid undefined values
+    try {
+      const errorLogData = {
+        to: Array.isArray(to) ? to : [to],
+        subject,
+        sentAt: admin.firestore.FieldValue.serverTimestamp(),
+        sentBy: context.auth.uid,
+        status: 'failed',
+        error: error.message || 'Unknown error',
+      };
+      
+      await admin.firestore().collection('email_logs').add(errorLogData);
+    } catch (logError) {
+      console.warn('Failed to log email error:', logError);
+    }
+
+    throw new functions.https.HttpsError('internal', 'Failed to send email');
   }
 });
 

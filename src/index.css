@@ -22,12 +22,16 @@ a:hover {
   color: #535bf2;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  display: block; /* prevent auto-centering that causes side gaps */
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden; /* avoid horizontal scrollbars */
 }
 
 h1 {

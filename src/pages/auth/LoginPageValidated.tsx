@@ -98,6 +98,19 @@ export default function LoginPageValidated() {
               Iniciar Sesión
             </Typography>
             <Box component="form" onSubmit={onSubmit} sx={{ mt: 1, width: '100%' }}>
+              {/* Credenciales de prueba */}
+              <Box sx={{ mb: 2, p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
+                <Typography variant="body2" color="info.contrastText" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  🔐 Credenciales de Prueba:
+                </Typography>
+                <Typography variant="body2" color="info.contrastText">
+                  Email: admin@comercializadora-cf.com
+                </Typography>
+                <Typography variant="body2" color="info.contrastText">
+                  Password: Admin123456!
+                </Typography>
+              </Box>
+              
               <TextField
                 margin="normal"
                 required
@@ -106,6 +119,7 @@ export default function LoginPageValidated() {
                 label="Correo Electrónico"
                 autoComplete="email"
                 autoFocus
+                defaultValue="admin@comercializadora-cf.com"
                 {...register('email')}
                 error={!!errors.email}
                 helperText={errors.email?.message}

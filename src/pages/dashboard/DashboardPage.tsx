@@ -27,8 +27,14 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const statusIcons: Record<ServiceStatus, React.ReactElement> = {
   'Solicitado': <InfoIcon color="info" />,
+  'En Proceso': <AssignmentIcon color="primary" />,
+  'Visita Técnica': <WarningIcon color="warning" />,
   'En Visita Técnica': <InfoIcon color="info" />,
-  'Cotización Aprobada': <InfoIcon color="info" />,
+  'Pendiente Cotización': <WarningIcon color="warning" />,
+  'Cotización Enviada': <InfoIcon color="info" />,
+  'Cotización Aprobada': <CheckCircleIcon color="success" />,
+  'Cotización Rechazada': <WarningIcon color="error" />,
+  'Rechazado': <WarningIcon color="error" />,
   'En Planificación': <WarningIcon color="warning" />,
   'En Ejecución': <WarningIcon color="warning" />,
   'Finalizado': <CheckCircleIcon color="success" />,
@@ -123,7 +129,7 @@ export default function DashboardPage() {
   );
 
   return (
-    <Box>
+    <Box sx={{ px: 0 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
           Panel de Control
@@ -146,8 +152,15 @@ export default function DashboardPage() {
         <StatCard title="Pendientes de Aprobación" value={stats.pendingApproval} color="info" />
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3 }}>
-        <Box>
+      <Box 
+        sx={{ 
+          display: 'flex',
+          flexDirection: { xs: 'column', lg: 'row' },
+          gap: 3,
+          width: '100%'
+        }}
+      >
+        <Box sx={{ flex: { xs: '1', lg: '2' }, minWidth: 0 }}>
           <Card>
             <CardHeader
               title="Actividad Reciente"
@@ -186,16 +199,16 @@ export default function DashboardPage() {
                         </Box>
                       }
                       secondary={
-                        <>
-                          <Typography variant="body2" color="text.secondary">
+                        <Box component="span" sx={{ display: 'block' }}>
+                          <Typography variant="body2" color="text.secondary" component="span" sx={{ display: 'block' }}>
                             {service.fscf001_data?.serviceType || 'Sin tipo especificado'}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" color="text.secondary" component="span" sx={{ display: 'block' }}>
                             {service.createdAt && (service.createdAt as any).toDate
                               ? new Date((service.createdAt as any).toDate()).toLocaleDateString()
                               : 'Fecha no disponible'}
                           </Typography>
-                        </>
+                        </Box>
                       }
                     />
                     <Typography
@@ -206,6 +219,7 @@ export default function DashboardPage() {
                         px: 1,
                         borderRadius: 1,
                         fontSize: '0.75rem',
+                        whiteSpace: 'nowrap'
                       }}
                     >
                       {service.status}
@@ -223,19 +237,50 @@ export default function DashboardPage() {
             )}
           </Card>
         </Box>
-        <Box>
-          <Card>
+        <Box sx={{ flex: { xs: '1', lg: '1' }, minWidth: { xs: '100%', lg: '300px' } }}>
+          <Card sx={{ height: 'fit-content' }}>
             <CardHeader title="Acciones Rápidas" />
             <Divider />
-            <List>
-              <ListItem component="div" onClick={() => navigate('/services/new')} sx={{ cursor: 'pointer' }}>
+            <List sx={{ py: 0 }}>
+              <ListItem 
+                component="div" 
+                onClick={() => navigate('/services/new')} 
+                sx={{ 
+                  cursor: 'pointer',
+                  '&:hover': { backgroundColor: 'action.hover' }
+                }}
+              >
                 <ListItemText primary="Crear Nuevo Servicio" />
               </ListItem>
-              <ListItem component="div" onClick={() => navigate('/clients')} sx={{ cursor: 'pointer' }}>
+              <ListItem 
+                component="div" 
+                onClick={() => navigate('/clients')} 
+                sx={{ 
+                  cursor: 'pointer',
+                  '&:hover': { backgroundColor: 'action.hover' }
+                }}
+              >
                 <ListItemText primary="Administrar Clientes" />
               </ListItem>
+              <ListItem 
+                component="div" 
+                onClick={() => navigate('/quotations')} 
+                sx={{ 
+                  cursor: 'pointer',
+                  '&:hover': { backgroundColor: 'action.hover' }
+                }}
+              >
+                <ListItemText primary="Ver Cotizaciones" />
+              </ListItem>
               {userRole === 'admin' && (
-                <ListItem component="div" onClick={() => navigate('/admin')} sx={{ cursor: 'pointer' }}>
+                <ListItem 
+                  component="div" 
+                  onClick={() => navigate('/admin')} 
+                  sx={{ 
+                    cursor: 'pointer',
+                    '&:hover': { backgroundColor: 'action.hover' }
+                  }}
+                >
                   <ListItemText primary="Configuración del Sistema" />
                 </ListItem>
               )}

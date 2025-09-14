@@ -64,12 +64,20 @@ export const NewClientPage = safeLazyImport(
   () => import('../pages/clients/NewClientPage')
 );
 
-export const ReportsPage = safeLazyImport(
-  () => import('../pages/reports/ReportsPage')
+export const ClientDetailPage = safeLazyImport(
+  () => import('../pages/clients/ClientDetailPage')
 );
 
-export const AdminPage = safeLazyImport(
-  () => import('../pages/admin/AdminPage')
+export const ServiceTypesPage = safeLazyImport(
+  () => import('../pages/catalogs/ServiceTypesPage')
+);
+
+export const TechnicalVisitPage = safeLazyImport(
+  () => import('../pages/services/TechnicalVisitPageSimple')
+);
+
+export const MonitoringDashboard = safeLazyImport(
+  () => import('../pages/admin/MonitoringDashboard')
 );
 
 export const NotFoundPage = safeLazyImport(
@@ -78,6 +86,26 @@ export const NotFoundPage = safeLazyImport(
 
 export const UnauthorizedPage = safeLazyImport(
   () => import('../pages/UnauthorizedPage')
+);
+
+export const CatalogsPage = safeLazyImport(
+  () => import('../pages/catalogs/CatalogsPage')
+);
+
+export const QuotationsPage = safeLazyImport(
+  () => import('../pages/quotations/QuotationsPage')
+);
+
+export const ReportsPage = safeLazyImport(
+  () => import('../pages/reports/ReportsPage')
+);
+
+export const AdminPage = safeLazyImport(
+  () => import('../pages/admin/AdminPage')
+);
+
+export const WorkOrderDetailPage = safeLazyImport(
+  () => import('../pages/workorders/WorkOrderDetailPage')
 );
 
 // Dynamic imports for heavy utilities
@@ -108,6 +136,7 @@ export const LazyComponents = {
   NewServicePageValidated,
   ClientsPage,
   NewClientPage,
+  ClientDetailPage,
   ReportsPage,
   AdminPage,
   NotFoundPage,

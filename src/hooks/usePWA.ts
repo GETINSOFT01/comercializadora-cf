@@ -41,9 +41,11 @@ export function usePWA(): PWAState & PWAActions {
   useEffect(() => {
     // Listener para instalación
     const handleBeforeInstallPrompt = (e: Event) => {
+      console.log('[PWA] beforeinstallprompt event fired');
       e.preventDefault();
       setDeferredPrompt(e);
       setState(prev => ({ ...prev, isInstallable: true }));
+      console.log('[PWA] App is now installable');
     };
 
     // Listener para cambios de conectividad

@@ -6,7 +6,8 @@ export const serviceRequestFormSchema = z.object({
     .min(1, 'Debe seleccionar un cliente'),
   
   serviceType: z.string()
-    .min(1, 'El tipo de servicio es requerido'),
+    .min(1, 'Debe seleccionar un tipo de servicio')
+    .max(100, 'El tipo de servicio es muy largo'),
   
   description: z.string()
     .min(10, 'La descripción debe tener al menos 10 caracteres')
@@ -16,10 +17,15 @@ export const serviceRequestFormSchema = z.object({
     message: 'Seleccione una prioridad válida'
   }),
   
+  requiresVisit: z.enum(['si', 'no'], {
+    message: 'Debe especificar si requiere visita técnica'
+  }),
+  
   estimatedDuration: z.string()
     .min(1, 'La duración estimada es requerida')
-    .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
-      message: 'Debe ser un número positivo'
+    .max(50, 'La duración no puede exceder 50 caracteres')
+    .refine((val) => val.trim().length > 0, {
+      message: 'La duración estimada no puede estar vacía'
     }),
   
   estimatedStartDate: z.string()

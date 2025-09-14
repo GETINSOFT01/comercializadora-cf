@@ -14,6 +14,7 @@ describe('Service Validation Schema', () => {
       contactName: 'Juan Pérez',
       contactPhone: '+52 55 1234 5678',
       additionalNotes: 'Acceso por camino de terracería',
+      requiresVisit: 'no' as const,
       termsAccepted: true,
     };
 
@@ -92,7 +93,7 @@ describe('Service Validation Schema', () => {
     });
 
     it('should validate date format', () => {
-      const validDates = ['2024-12-01', '2025-01-15', '2024-06-30'];
+      const validDates = ['2025-12-01', '2026-01-15', '2025-10-15'];
       
       validDates.forEach(date => {
         const data = { ...validServiceFormData, estimatedStartDate: date };
@@ -186,14 +187,14 @@ describe('Service Validation Schema', () => {
     });
 
     it('should validate maximum description length', () => {
-      const longDescription = 'A'.repeat(1001);
+      const longDescription = 'A'.repeat(2001);
       const invalidData = { ...validServiceFormData, description: longDescription };
       const result = serviceRequestFormSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
     });
 
     it('should validate maximum notes length', () => {
-      const longNotes = 'A'.repeat(501);
+      const longNotes = 'A'.repeat(1001);
       const invalidData = { ...validServiceFormData, additionalNotes: longNotes };
       const result = serviceRequestFormSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
